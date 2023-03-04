@@ -31,8 +31,8 @@ services:
       DB_MYSQL_PASSWORD: ${MARIADB_PASSWORD}
       DB_MYSQL_NAME: ${MARIADB_NAME}
     volumes:
-      - ${PATH}/nginx/data:/data
-      - ${PATH}/nginx/letsencrypt:/etc/letsencrypt
+      - ~/nginx/data:/data
+      - ~/nginx/letsencrypt:/etc/letsencrypt
   redis:
     image: redis:latest
     command: redis-server --port 6379 --appendonly yes --requirepass ${REDIS_PASSWORD}
@@ -70,9 +70,9 @@ services:
     restart: unless-stopped
     volumes:
       #젠킨스 정보 연동
-      - ${PATH}/jenkins/var/jenkins_home:/var/jenkins_home
+      - ~/jenkins/var/jenkins_home:/var/jenkins_home
       #빌드 프로젝트 연동
-      - ${PATH}/nginx/data/jenkins:/var/jenkins_home/workspace
+      - ~/nginx/data/jenkins:/var/jenkins_home/workspace
       #도커소켓연결
       - /var/run/docker.sock:/var/run/docker.sock
       # #호스트 정보 저장
