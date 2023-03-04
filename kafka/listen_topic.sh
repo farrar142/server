@@ -1,0 +1,1 @@
+docker exec kafka-1 kafka-console-consumer --topic $1 --bootstrap-server kafka-1:9092

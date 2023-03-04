@@ -1,0 +1,7 @@
+mariadb/run
+mariadb/mysql
+*.log
+nginx/data
+nginx/letsencrypt
+postgresql/data
+.env

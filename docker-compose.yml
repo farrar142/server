@@ -1,0 +1,97 @@
+version: '3.7'
+services:
+  mariadb:
+    image: 'mariadb:latest'
+    container_name: 'mariadb'
+    restart: unless-stopped
+    ports:
+      - '3306:3306'
+    volumes:
+      - ./mariadb/etc:/etc/mysql
+      - ./mariadb/run/mysqld:/run/mysqld
+      - ./mariadb/mysql:/var/lib/mysql
+    environment:
+      MARIADB_USER: ${MARIADB_USER}
+      MARIADB_PASSWORD: ${MARIADB_PASSWORD}
+      MARIADB_ROOT_PASSWORD: ${MARIADB_PASSWORD}
+      MARIADB_DATABASE: 'nginx'
+  nginx:
+    image: 'jc21/nginx-proxy-manager:latest'
+    container_name: 'nginx'
+    restart: unless-stopped
+    ports:
+      - '80:80' # Public HTTP Port
+      - '443:443' # Public HTTPS Port
+      - '81:81' # Admin Web Port
+      - '8023:8023' # Additional Sample Port
+    environment:
+      DB_MYSQL_HOST: ${MARIADB_HOST}
+      DB_MYSQL_PORT: 3306
+      DB_MYSQL_USER: ${MARIADB_USER}
+      DB_MYSQL_PASSWORD: ${MARIADB_PASSWORD}
+      DB_MYSQL_NAME: ${MARIADB_NAME}
+    volumes:
+      - /home/${USER}/nginx/data:/data
+      - /home/${USER}/nginx/letsencrypt:/etc/letsencrypt
+  redis:
+    image: redis:latest
+    command: redis-server --port 6379 --appendonly yes --requirepass ${REDIS_PASSWORD}
+    container_name: redis
+    hostname: root
+    labels:
+      - 'name=redis'
+      - 'mode=standalone'
+    ports:
+      - 6379:6379
+    restart: unless-stopped
+    environment:
+      TZ: 'Asia/Seoul'
+  event-broker:
+    image: redis:latest
+    command: redis-server --port 6379 --appendonly yes --requirepass ${REDIS_PASSWORD}
+    container_name: event-broker
+    hostname: root
+    labels:
+      - 'name=redis'
+      - 'mode=standalone'
+    ports:
+      - 6380:6379
+    restart: unless-stopped
+    environment:
+      TZ: 'Asia/Seoul'
+
+  postgres:
+    build: settings
+    restart: always
+    container_name: postgres
+    volumes:
+      - ./postgresql/data:/var/lib/postgresql/data/pgdata
+    environment:
+      - PGDATA=/var/lib/postgresql/data/pgdata
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB_NAME=${POSTGRES_NAME}
+    ports:
+      - '5432:5432'
+
+  jenkins:
+    build:
+      context: ./jenkins
+      dockerfile: ./dockerfile
+    image: jenkins
+    container_name: jenkins
+    restart: unless-stopped
+    volumes:
+      #젠킨스 정보 연동
+      - /home/${USER}/jenkins/var/jenkins_home:/var/jenkins_home
+      #빌드 프로젝트 연동
+      - /home/${USER}/nginx/data/jenkins:/var/jenkins_home/workspace
+      #도커소켓연결
+      - /var/run/docker.sock:/var/run/docker.sock
+      # #호스트 정보 저장
+      # - /home/${USER}/.ssh:/root/.ssh
+    ports:
+      - '8080:8080'
+    privileged: true
+    environment:
+      TZ: 'Asia/Seoul'

@@ -1,0 +1,1 @@
+docker exec -it kafka-1 kafka-console-producer --topic $1 --broker-list kafka-1:9092
